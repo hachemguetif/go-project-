@@ -6,63 +6,63 @@ jobs:
     steps:
       - checkout
       - run: go test -v ./...
-  # Build:
-  #   docker:
-  #     - image: cimg/go:1.13
-  #   steps:
-  #     - checkout
-  #     - run: go get -v -t -d ./...
-  #     - run: go build -o webappdemo
-  #     - persist_to_workspace:
-  #         root: .
-  #         paths:
-  #           - ./webappdemo
-  #           - ./deployment.yaml
-  # Publish:
-  #   docker:
-  #     - image: cimg/go:1.13
-  #   steps:
-  #     - checkout
-  #     - setup_remote_docker
-  #     - attach_workspace:
-  #         at: /tmp/workspace
-  #     - run: |
-  #         cp /tmp/workspace/webappdemo .
-  #         TAG=0.1.$CIRCLE_BUILD_NUM
-  #         docker build -t hachemguetif/circleci-argocd:$TAG .
-  #         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-  #         docker push hachemguetif/circleci-argocd:$TAG
-  # GenerateYAML:
-  #   docker:
-  #     - image: cimg/base:2020.06
-  #   steps:
-  #     - attach_workspace:
-  #         at: /tmp/workspace
-  #     - run : |
-  #         TAG=0.1.$CIRCLE_PREVIOUS_BUILD_NUM
-  #         git clone https://github.com/hachemguetif/ArgoCD-repo /tmp/CircleCI-Webapp-CD
-  #         cd /tmp/CircleCI-Webapp-CD
-  #         cp /tmp/workspace/deployment.yaml .
-  #         sed -i 's/\(circleci-argocd\)\(.*\)/\1:'$TAG'/' ./deployment.yaml
-  #         git config credential.helper 'cache --timeout=120'
-  #         git config user.email "hachem.guetiff@gmail.com"
-  #         git config user.name "hachemguetif"
-  #         git add .
-  #         git commit -m "Update via CircleCI"
-  #         # Push quietly to prevent showing the token in log
-  #         git push -q https://$GITHUB_PERSONAL_TOKEN@github.com/hachemguetif/CircleCI-demo.git main
+  Build:
+    docker:
+      - image: cimg/go:1.13
+    steps:
+      - checkout
+      - run: go get -v -t -d ./...
+      - run: go build -o webappdemo
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./webappdemo
+            - ./deployment.yaml
+  Publish:
+    docker:
+      - image: cimg/go:1.13
+    steps:
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cp /tmp/workspace/webappdemo .
+          TAG=0.1.$CIRCLE_BUILD_NUM
+          docker build -t hachemguetif/circleci-argocd:$TAG .
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+          docker push hachemguetif/circleci-argocd:$TAG
+  GenerateYAML:
+    docker:
+      - image: cimg/base:2020.06
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run : |
+          TAG=0.1.$CIRCLE_PREVIOUS_BUILD_NUM
+          git clone https://github.com/hachemguetif/ArgoCD-repo /tmp/CircleCI-Webapp-CD
+          cd /tmp/CircleCI-Webapp-CD
+          cp /tmp/workspace/deployment.yaml .
+          sed -i 's/\(circleci-argocd\)\(.*\)/\1:'$TAG'/' ./deployment.yaml
+          git config credential.helper 'cache --timeout=120'
+          git config user.email "hachem.guetiff@gmail.com"
+          git config user.name "hachemguetif"
+          git add .
+          git commit -m "Update via CircleCI"
+          # Push quietly to prevent showing the token in log
+          git push -q https://$GITHUB_PERSONAL_TOKEN@github.com/hachemguetif/CircleCI-demo.git main
 
 workflows:
   version: 2
   Test-Build-Publish:
     jobs:
       - Test
-      # - Build:
-      #     requires:
-      #       - Test
-      # - Publish:
-      #     requires:
-      #       - Build
-      # - GenerateYAML:
-      #     requires:
-      #       - Publish     
+      - Build:
+          requires:
+            - Test
+      - Publish:
+          requires:
+            - Build
+      - GenerateYAML:
+          requires:
+            - Publish     
